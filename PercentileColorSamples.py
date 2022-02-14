@@ -1,6 +1,5 @@
 import cv2
 import glob
-from matplotlib import pyplot as plt
 import numpy as np
 from pathlib import Path
 
@@ -9,8 +8,8 @@ def make_percentile_color_samples(src_img: np.array, mask: np.array, percentile_
     dst_img_height = src_img_height
     dst_img_width = src_img_width + gap + sample_width
     dst_img = np.full((dst_img_height, dst_img_width, 3), 255, dtype='uint8')
-    print(f'src_img : {src_img.shape}')
-    print(f'dst_img : {dst_img.shape}')
+    # print(f'src_img : {src_img.shape}')
+    # print(f'dst_img : {dst_img.shape}')
     dst_img[:, :src_img_width] = src_img[:, :]
 
     # カラーサンプルの準備
@@ -39,13 +38,13 @@ def make_percentile_color_samples(src_img: np.array, mask: np.array, percentile_
         hue_list = hsv[:, :, 0][0]
         hue_thr = np.percentile(hue_list, [10, 90])
         print(f'hue threshold : {hue_thr}')
-        legal_color_flg = list(np.array(hue_list >= hue_thr[0]) * np.array(hue_list <= hue_thr[1]))
+        legal_color_flg = np.array(hue_list >= hue_thr[0]) * np.array(hue_list <= hue_thr[1])
         legal_color = np.array(selected_pixcel)[legal_color_flg]
 
+        # 外れ値を除外した画素から、平均の色を算出
         mean_color = np.mean(legal_color, axis=0)
-
         print(f'{i} : {bright} : {mean_color}')
-        print()
+        print('')
 
         sample_top_y = (sample_height + gap) * (samples_num - i - 1)
         sample_bottom_y = sample_top_y + sample_height - 1
@@ -75,5 +74,4 @@ if __name__ == '__main__':
         img = cv2.imread(im_file)
         mask = cv2.imread(f'{mask_dir}/{im_name}.png', cv2.IMREAD_GRAYSCALE)
         output_img, percentile_brightness_list = make_percentile_color_samples(img, mask, [70, 75, 80, 85, 90, 95])
-        # print(percentile_brightness_list)
         cv2.imwrite(f'{output_dir}/{im_name}.png', output_img)
